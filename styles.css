@@ -1,0 +1,291 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
+
+body {
+    background-color: #121212;
+    color: #FFFFFF;
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; 
+    opacity: 0; 
+    animation: fadeIn 1.5s forwards;
+    user-select: none; /* Evitar selección de texto */
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+.container {
+    position: relative;
+    height: 100vh;
+    user-select: none; /* Evitar selección de texto */
+}
+
+header {
+    background-color: #0D47A1;
+    padding: 1.5vw 0;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    user-select: none; /* Evitar selección de texto */
+}
+
+header h1 {
+    margin: 0;
+    font-size: 7.5vw;
+    color: #FFFFFF;
+    user-select: none; /* Evitar selección de texto */
+}
+
+.header-left {
+    position: absolute;
+    top: 50%;
+    left: 1.5vw;
+    transform: translateY(-50%);
+    font-size: 2.4vw;
+    color: #FFFFFF;
+    user-select: none; /* Evitar selección de texto */
+}
+
+.header-right {
+    position: absolute;
+    top: 50%;
+    right: 1.5vw;
+    transform: translateY(-50%);
+    color: #FFFFFF;
+    display: flex;
+    font-size: 1.4vw;
+    align-items: center;
+    user-select: none; /* Evitar selección de texto */
+}
+
+.login-box {
+    background-color: #1E1E1E;
+    padding: 4vw;
+    border-radius: 1vw;
+    box-shadow: 0vw 0vw 3vw 0vw rgba(0, 0, 10, 2.7);
+    width: 76vw;
+    margin: 10vw auto 3vw auto; /* top:10vw, sides: auto, bottom:3vw */
+    display: flex;
+    text-align: center;
+    align-items: center;
+    position: relative;
+    align-content: center;
+    justify-content: center;
+    flex-direction: column;
+    user-select: none; /* Evitar selección de texto */
+}
+
+#internetStatus {
+    width: 3.5vw;
+    height: 3.5vw;
+    border-radius: 50%;
+    background-color: green; /* Cambiado inline style a CSS */
+    box-shadow: 0 0 5vw green; /* Cambiado inline style a CSS */
+    animation: blink 1s infinite;
+    position: absolute;
+    top: 2vw;
+    right: 2vw;
+    user-select: none; /* Evitar selección de texto */
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    50.01%, 100% { opacity: 0; }
+}
+
+#time {
+    font-size: 6.5vw;
+    margin-bottom: 6vw;
+    border: 0.5vw solid #ffffff;
+    padding: 2vw;
+    border-radius: 1vw;
+    display: inline-block;
+    user-select: none; /* Evitar selección de texto */
+}
+
+/* Estilos para el campo de entrada del código de barras */
+#barcodeInput {
+    border: 4px solid #ccc; /* Borde normal */
+    border-radius: 0.5vw;
+    padding: 1vw;
+    font-size: 3.2vw;
+    font-family: Helvetica;
+    font-weight: bold;
+    text-align: center;
+    transition: border-color 0.3s, background-color 0.3s;
+    width: 85%;
+    margin: 1vw 0;
+}
+
+/* Estilos cuando el campo de entrada no está enfocado */
+#barcodeInput.unfocused {
+    border-color: red; /* Borde rojo */
+    background-color: #ffe6e6; /* Fondo ligeramente rojo para mayor visibilidad */
+    color: #ff0000; /* Texto en rojo */
+}
+
+/* Placeholder estilizado para el estado no enfocado */
+#barcodeInput.unfocused::placeholder {
+    color: #ff0000; /* Placeholder en rojo */
+    opacity: 1; /* Asegurar que el color se aplique correctamente */
+}
+
+#status {
+    font-size: 3.5vw;
+    margin-top: 4vw;
+    margin-bottom: 0vw;
+    color: #27ae60;
+    font-weight: bold;
+    animation: glow 1s ease-in-out infinite alternate;
+    user-select: none; /* Evitar selección de texto */
+}
+
+#status.error {
+    color: red; /* Color rojo para el mensaje de error */
+    font-weight: bold;
+    text-shadow: none; /* Sin animación de glow */
+}
+
+@keyframes glow {
+    from {
+        text-shadow: 0 0 2vw #27ae60;
+    }
+    to {
+        text-shadow: 0 0 4vw #27ae60;
+    }
+}
+
+.loader {
+    border: 0vw solid #f3f3f3;
+    border-top: 1vw solid #3498db;
+    border-radius: 50%;
+    width: 15vw;
+    height: 15vw;
+    animation: spin 1s linear infinite;
+    margin: 4vw auto -5vw auto;
+    display: none; /* Oculto por defecto */
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.pending-data {
+    font-size: 1.2vw;
+    color: #f1c40f;
+    margin-top: 3vw;
+    font-weight: bold;
+    user-select: none; /* Evitar selección de texto */
+}
+
+.counter {
+    position: absolute;
+    bottom: 5vw;
+    right: 2.5vw;
+    font-size: 3.5vw;
+    user-select: none; /* Evitar selección de texto */
+}
+
+.counter-box {
+    background-color: #1E1E1E;
+    padding: 1.5vw 2vw;
+    border-radius: 0.5vw;
+    border: 0.6vw solid #FFFFFF;
+    display: inline-block;
+}
+
+.counter-box span {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.counter-box span.animate {
+    transform: scale(1.5);
+}
+
+.logo {
+    position: absolute;
+    bottom: 6vw;
+    left: 14vw;
+    transform: scale(2); /* Corregido de 'scale: 2;' a 'transform: scale(2);' */
+    user-select: none; /* Evitar selección de texto */
+}
+
+.logo img {
+    height: 4vw;
+    user-select: none; /* Evitar selección de imagen */
+}
+
+/* Estilos para el botón de eliminación */
+.action-buttons {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 3vw;
+    margin-bottom: 5vw;
+}
+
+.delete-button {
+    background-color: #c0392b;
+    color: #FFFFFF;
+    border: none;
+    font-family: Helvetica;
+    border-radius: 0.5vw;
+    padding: 0.5vw 1vw;
+    font-size: 3vw;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.delete-button:hover {
+    background-color: #e74c3c;
+}
+
+.delete-button:active {
+    transform: scale(0.98);
+}
+
+/* Estilos para la Tabla de Registros */
+.records-table {
+    width: 80%;
+    margin: 2vw auto;
+    overflow-x: auto; /* Para dispositivos móviles */
+}
+
+.records-table table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #1E1E1E;
+    border-radius: 0.5vw;
+    overflow: hidden;
+}
+
+.records-table th, .records-table td {
+    padding: 1vw;
+    text-align: center;
+    border-bottom: 0.2vw solid #444;
+}
+
+.records-table th {
+    background-color: #0D47A1;
+    color: #FFFFFF;
+    font-size: 2.5vw;
+}
+
+.records-table td {
+    font-size: 2vw;
+    color: #FFFFFF;
+}
+
+.records-table tr:nth-child(even) {
+    background-color: #2E2E2E;
+}
+
+.records-table tr:hover {
+    background-color: #3E3E3E;
+}

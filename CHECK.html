@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro</title>
+    <link rel="stylesheet" href="styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-left">CONTEC TABASCO</div>
+            <h1>INVENTARIO</h1>
+            <div class="header-right">
+                <div id="currentDate">miércoles, 13 de noviembre de 2024</div>
+            </div>
+        </header>
+        
+        <div class="login-box">
+            <!-- Botón para eliminar el último registro -->
+            <div class="action-buttons">
+                <button id="deleteLastRecord" class="delete-button">Borrar Registro</button>
+            </div>
+            <!-- Indicador LED de estado de Internet -->
+            <div id="internetStatus" class="led"></div>
+            <div id="time">11:52:37</div>
+            <input type="text" id="barcodeInput" autofocus placeholder="Escanea el codigo" class="">
+            <div id="status">Datos descargados y registros reiniciados</div>
+            <!-- Animación de carga -->
+            <div id="loader" class="loader" style="display: none;"></div>
+            <!-- Mensaje de datos pendientes -->
+            <div id="pendingData" class="pending-data"></div>            
+        </div>
+
+        <!-- Tabla de Últimos 10 Registros -->
+        <div class="records-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Código</th>
+                    </tr>
+                </thead>
+                <tbody id="recordsTableBody">
+                    <!-- Los últimos 10 registros se insertarán aquí dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="counter">
+            <div class="counter-box">
+                Registros totales: <span id="totalRecords" class="">0</span>
+            </div>
+        </div>
+        
+        <div class="logo">
+            <img src="logo.png" alt="SWS SYSTEMS">
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
