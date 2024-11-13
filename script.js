@@ -416,7 +416,7 @@ async function uploadCSV() {
     formData.append('deviceId', deviceId);
 
     // Dirección del servidor central
-    const serverURL = 'http://192.168.1.100:3000/upload'; // Cambia esto por la IP de tu servidor
+    const serverURL = 'http://172.30.182.161:3000/upload'; // Cambia esto por la IP de tu servidor
 
     try {
         const response = await fetch(serverURL, {
@@ -462,7 +462,7 @@ async function uploadCSV() {
 // Función para verificar si el archivo fue descargado y limpiar datos si es así
 async function checkDownloadStatus() {
     try {
-        const serverURL = 'http://192.168.1.100:3000/files'; // Cambia esto por la IP de tu servidor
+        const serverURL = 'http://172.30.182.161:3000/files'; // Cambia esto por la IP de tu servidor
         const response = await fetch(serverURL);
         const files = await response.json();
 
