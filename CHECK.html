@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Registro</title>
+    <title>Registro de Inventario</title>
     <link rel="stylesheet" href="styles.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
@@ -12,20 +12,26 @@
             <div class="header-left">CONTEC TABASCO</div>
             <h1>INVENTARIO</h1>
             <div class="header-right">
-                <div id="currentDate">miércoles, 13 de noviembre de 2024</div>
+                <div id="currentDate">bleh</div>
             </div>
         </header>
         
         <div class="login-box">
-            <!-- Botón para eliminar el último registro -->
+            <!-- Botones para gestionar registros -->
             <div class="action-buttons">
                 <button id="deleteLastRecord" class="delete-button">Borrar Registro</button>
+                <button id="uploadCSV" class="upload-button">Server</button>
+                <button id="deletePart" class="delete-button">Cancelar PART</button>
             </div>
             <!-- Indicador LED de estado de Internet -->
             <div id="internetStatus" class="led"></div>
-            <div id="time">11:52:37</div>
-            <input type="text" id="barcodeInput" autofocus placeholder="Escanea el codigo" class="">
-            <div id="status">Datos descargados y registros reiniciados</div>
+            <div id="time">bleh</div>
+            
+            <!-- Área para mostrar Part y Serial mientras se escanean -->
+            <div id="currentScan" class="current-scan"></div>
+            
+            <input type="text" id="barcodeInput" autofocus placeholder="Escanea el código">
+            <div id="status"></div> <!-- Mensaje de estado ahora vacío -->
             <!-- Animación de carga -->
             <div id="loader" class="loader" style="display: none;"></div>
             <!-- Mensaje de datos pendientes -->
@@ -40,7 +46,8 @@
                         <th>No.</th>
                         <th>Fecha</th>
                         <th>Hora</th>
-                        <th>Código</th>
+                        <th>Part</th>
+                        <th>Serial</th>
                     </tr>
                 </thead>
                 <tbody id="recordsTableBody">
@@ -51,7 +58,7 @@
 
         <div class="counter">
             <div class="counter-box">
-                Registros totales: <span id="totalRecords" class="">0</span>
+                Registros totales: <span id="totalRecords">0</span>
             </div>
         </div>
         

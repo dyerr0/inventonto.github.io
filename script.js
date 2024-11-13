@@ -3,9 +3,22 @@
 // Variables Iniciales
 let totalRecords = 0;
 let storedRecords = [];
-const downloadCodes = ['272545', '111111'];
 
 let projectName = 'CLK';
+
+// Variable para manejar el timeout de los mensajes de estado
+let statusTimeout;
+
+// Variables para el flujo de escaneo
+let currentScan = 'part'; // 'part' o 'serial'
+let tempPartCode = '';
+
+// Obtener o generar un Device ID único
+let deviceId = localStorage.getItem('deviceId');
+if (!deviceId) {
+    deviceId = 'device-' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('deviceId', deviceId);
+}
 
 // Función para actualizar la hora actual
 function updateTime() {
@@ -27,7 +40,7 @@ function updateDate() {
     document.getElementById('currentDate').textContent = dateString;
 }
 updateDate();
-setInterval(updateDate, 3600000);
+setInterval(updateDate, 3600000); // Actualizar cada hora
 
 // Función para actualizar el estado de Internet
 function updateInternetStatus() {
@@ -41,13 +54,16 @@ function updateInternetStatus() {
     }
 }
 updateInternetStatus();
-setInterval(updateInternetStatus, 2000);
+setInterval(updateInternetStatus, 2000); // Actualizar cada 2 segundos
 
 // Referencia al campo de entrada de código de barras
 const barcodeInput = document.getElementById('barcodeInput');
 
+// Referencia al área de escaneo actual (Part y Serial)
+const currentScanDiv = document.getElementById('currentScan');
+
 // Placeholder para el campo de entrada
-const placeholderFocused = 'Escanea el codigo';
+const placeholderFocused = 'Escanea el código';
 const placeholderUnfocused = 'ERROR: Da clic';
 
 // Eventos para el foco del campo de entrada
@@ -68,50 +84,99 @@ barcodeInput.addEventListener('keydown', (event) => {
     }
 });
 
+// Función centralizada para manejar los mensajes de estado
+function setStatus(message, type = 'info') {
+    const status = document.getElementById('status');
+
+    // Limpiar cualquier timeout existente para evitar múltiples temporizadores
+    if (statusTimeout) {
+        clearTimeout(statusTimeout);
+    }
+
+    // Eliminar todas las clases de tipo previamente aplicadas
+    status.classList.remove('success', 'error', 'deleted', 'info', 'warning', 'purple', 'fade-out', 'glow');
+
+    // Asignar la clase correspondiente según el tipo de mensaje
+    switch(type) {
+        case 'success':
+            status.classList.add('success', 'glow');
+            break;
+        case 'error':
+            status.classList.add('error', 'glow');
+            break;
+        case 'deleted':
+            status.classList.add('deleted', 'glow');
+            break;
+        case 'info':
+            status.classList.add('info', 'glow');
+            break;
+        case 'warning':
+            status.classList.add('warning', 'glow');
+            break;
+        case 'purple':
+            status.classList.add('purple', 'glow');
+            break;
+        default:
+            status.classList.add('info', 'glow');
+    }
+
+    // Establecer el mensaje de estado
+    status.textContent = message;
+
+    // Establecer un timeout para iniciar la animación de fadeOut después de 5 segundos
+    statusTimeout = setTimeout(() => {
+        // Añadir la clase 'fade-out' para iniciar la animación de desvanecimiento
+        status.classList.add('fade-out');
+
+        // Remover las clases de tipo después de la animación de fadeOut (1s)
+        setTimeout(() => {
+            status.textContent = '';
+            status.classList.remove('success', 'error', 'deleted', 'info', 'warning', 'purple', 'fade-out');
+        }, 1000); // Duración de la animación de fadeOut
+    }, 5000); // 5000 milisegundos = 5 segundos
+}
+
 // Función principal para procesar la entrada del código de barras
 function processBarcodeInput() {
     const barcode = barcodeInput.value.trim();
-    const status = document.getElementById('status');
+    barcodeInput.value = ''; // Limpiar el campo inmediatamente
 
-    // Verificar si es para descargar datos
-    if (downloadCodes.includes(barcode)) {
-        downloadDataAsCSV();
-        barcodeInput.value = '';
-        status.textContent = 'Datos descargados y registros reiniciados';
-        status.classList.remove('error');
-        void status.offsetWidth;
-        status.style.animation = 'glow 1s ease-in-out infinite alternate';
-        return;
-    }
-
-    if (/^\d{6}$/.test(barcode)) {
-        // Verificar límite de almacenamiento
-        if (isLocalStorageFull()) {
-            status.textContent = 'No se permiten más registros';
-            status.classList.add('error');
-            barcodeInput.value = '';
-            return;
+    if (currentScan === 'part') {
+        // Esperando un código que empiece con 'P'
+        if (/^P/i.test(barcode)) {
+            tempPartCode = barcode;
+            currentScan = 'serial';
+            currentScanDiv.textContent = `No. Part: ${tempPartCode}`;
+            setStatus(`Part escaneado: ${tempPartCode}`, 'success');
+        } else {
+            // No es un código válido para Part
+            setStatus(`- ${barcode} - No coincide`, 'error');
+            // Mantener el flujo de escaneo en 'part' sin cambiar el estado
+            currentScan = 'part';
+            tempPartCode = '';
+            currentScanDiv.textContent = '';
         }
+    } else if (currentScan === 'serial') {
+        // Esperando un código que empiece con 'S'
+        if (/^S/i.test(barcode)) {
+            const serialCode = barcode;
+            const partCode = tempPartCode;
+            currentScan = 'part'; // Resetear para el próximo registro
+            tempPartCode = '';
+            currentScanDiv.textContent = '';
 
-        const now = new Date();
-        // Formato de fecha: dd/mm/yyyy
-        const day = String(now.getDate()).padStart(2, '0');
-        const month = String(now.getMonth() + 1).padStart(2, '0'); // Los meses van de 0 a 11
-        const year = now.getFullYear();
-        const date = `${day}/${month}/${year}`;
-        const time = now.toLocaleTimeString('es-ES', { hour12: false });
+            // Mostrar ambos códigos en el estado
+            setStatus(`No. Part: ${partCode} - Serial: ${serialCode}`, 'info');
 
-        // Guardar registro
-        saveRecord(barcode, date, time);
-        barcodeInput.value = ''; // Limpiar el campo después de guardar
-
-        status.textContent = `${barcode} Registrado`;
-        status.classList.remove('error');
-        void status.offsetWidth;
-        status.style.animation = 'glow 1s ease-in-out infinite alternate';
-    } else {
-        status.textContent = 'ID no reconocido';
-        status.classList.add('error'); // Aplicar la clase de error
+            // Registrar el par de códigos
+            saveRecord(partCode, serialCode);
+        } else {
+            // No es un código válido para Serial
+            setStatus(`- ${barcode} - No coincide`, 'error');
+            // Mantener el flujo de escaneo en 'serial' sin resetear
+            currentScan = 'serial';
+            // No se limpia tempPartCode ni currentScanDiv
+        }
     }
 
     // Reenfocar el campo de entrada
@@ -121,14 +186,24 @@ function processBarcodeInput() {
 }
 
 // Función para guardar un registro
-function saveRecord(barcode, date, time) {
-    storedRecords.push({ barcode, date, time });
+function saveRecord(part, serial) {
+    const now = new Date();
+    // Formato de fecha: dd/mm/yyyy
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0'); // Los meses van de 0 a 11
+    const year = now.getFullYear();
+    const date = `${day}/${month}/${year}`;
+    const time = now.toLocaleTimeString('es-ES', { hour12: false });
+
+    // Crear el registro
+    const record = { part, serial, date, time };
+    storedRecords.push(record);
     localStorage.setItem('storedRecords', JSON.stringify(storedRecords));
 
     totalRecords++;
-    updateCounter();
     localStorage.setItem('totalRecords', totalRecords);
 
+    updateCounter();
     updateRecordsTable(); // Actualizar la tabla de registros
 }
 
@@ -149,8 +224,15 @@ function updateCounter() {
     }, 300);
 }
 
-// Cargar registros almacenados previamente
-storedRecords = JSON.parse(localStorage.getItem('storedRecords')) || [];
+// Cargar registros almacenados previamente con validación
+function loadStoredRecords() {
+    const stored = JSON.parse(localStorage.getItem('storedRecords')) || [];
+    // Filtrar registros que tienen los campos necesarios
+    storedRecords = stored.filter(record => record.part && record.serial && record.date && record.time);
+    // Actualizar localStorage con registros válidos
+    localStorage.setItem('storedRecords', JSON.stringify(storedRecords));
+}
+loadStoredRecords();
 
 // Función para verificar si el LocalStorage está lleno
 function isLocalStorageFull() {
@@ -163,110 +245,10 @@ function isLocalStorageFull() {
     }
 }
 
-// Funciones relacionadas con actividades han sido eliminadas
-
-// Función para descargar los registros como CSV
-function downloadDataAsCSV() {
-    if (storedRecords.length === 0) {
-        alert('No hay datos para descargar.');
-        return;
-    }
-
-    const status = document.getElementById('status');
-    const loader = document.getElementById('loader');
-
-    loader.style.display = 'block';
-
-    barcodeInput.disabled = true;
-
-    const minProcessingTime = 3000; // 3000 milisegundos = 3 segundos
-    const startTime = Date.now();
-
-    setTimeout(() => {
-        // Ordenar los registros por fecha y hora
-        storedRecords.sort((a, b) => {
-            const dateTimeA = parseDateTime(a.date, a.time);
-            const dateTimeB = parseDateTime(b.date, b.time);
-            return dateTimeA - dateTimeB;
-        });
-
-        // Preparar contenido CSV
-        let csvContent = 'data:text/csv;charset=utf-8,';
-        csvContent += 'No.,Fecha,Hora,Codigo\n'; // Añadido No. y renombrado Codigo
-
-        storedRecords.forEach((record, index) => {
-            const no = index + 1;
-            const row = `${no},${escapeCSV(record.date)},${escapeCSV(record.time)},${escapeCSV(record.barcode)}`;
-            csvContent += row + '\n';
-        });
-
-        const now = new Date();
-        const dateString = now.toLocaleDateString('es-ES').replace(/\//g, "'");
-        const timeString = now.toLocaleTimeString('es-ES', { hour12: false }).replace(/:/g, ".");
-        const fileName = `${projectName}-${dateString}-${timeString}.csv`;
-
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement('a');
-        link.setAttribute('href', encodedUri);
-        link.setAttribute('download', fileName);
-        document.body.appendChild(link);
-
-        // Asegurar que han pasado al menos 3 segundos
-        const elapsedTime = Date.now() - startTime;
-        const remainingTime = Math.max(0, minProcessingTime - elapsedTime);
-
-        setTimeout(() => {
-            link.click();
-            document.body.removeChild(link);
-
-            loader.style.display = 'none';
-
-            barcodeInput.disabled = false;
-
-            storedRecords = [];
-            localStorage.removeItem('storedRecords');
-
-            totalRecords = 0;
-            updateCounter();
-            localStorage.removeItem('totalRecords');
-
-            clearUserActivities(); // Asegúrate de eliminar o implementar esta función si no la usas.
-
-            status.textContent = 'Datos descargados y registros reiniciados';
-            status.classList.remove('error');
-            void status.offsetWidth;
-            status.style.animation = 'glow 1s ease-in-out infinite alternate';
-
-            setTimeout(() => {
-                barcodeInput.focus();
-            }, 100);
-
-            updateRecordsTable(); // Limpiar la tabla de registros
-        }, remainingTime);
-
-    }, 0); 
-}
-
-// Función para escapar valores CSV
-function escapeCSV(value) {
-    if (typeof value === 'string') {
-        value = value.replace(/"/g, '""'); // Escapar comillas dobles
-        return `"${value}"`; // Envolver en comillas dobles
-    }
-    return value;
-}
-
-// Función para parsear fecha y hora
-function parseDateTime(dateStr, timeStr) {
-    const [day, month, year] = dateStr.split('/').map(Number);
-    const [hours, minutes, seconds] = timeStr.split(':').map(Number);
-    return new Date(year, month - 1, day, hours, minutes, seconds);
-}
-
 // Función para eliminar el último registro
 document.getElementById('deleteLastRecord').addEventListener('click', () => {
     if (storedRecords.length === 0) {
-        alert('No hay registros para eliminar.');
+        setStatus('No hay registros para eliminar.', 'purple');
         return;
     }
 
@@ -275,18 +257,32 @@ document.getElementById('deleteLastRecord').addEventListener('click', () => {
     localStorage.setItem('storedRecords', JSON.stringify(storedRecords));
 
     totalRecords--;
-    updateCounter();
     localStorage.setItem('totalRecords', totalRecords);
+    updateCounter();
 
-    // Actualizar el contador y notificar al usuario con el barcode eliminado
-    const status = document.getElementById('status');
-    status.textContent = `Registro -${deletedRecord.barcode}- eliminado`;
-    status.classList.remove('error');
-    void status.offsetWidth;
-    status.style.animation = 'glow 1s ease-in-out infinite alternate';
+    // Actualizar el contador y notificar al usuario con el registro eliminado
+    setStatus(`Registro eliminado: Part ${deletedRecord.part} - Serial ${deletedRecord.serial}`, 'deleted');
 
     // Actualizar la tabla de registros
     updateRecordsTable();
+
+    // Reenfocar el campo de entrada
+    setTimeout(() => {
+        barcodeInput.focus();
+    }, 100);
+});
+
+// Función para eliminar el Part escaneado actualmente
+document.getElementById('deletePart').addEventListener('click', () => {
+    if (currentScan === 'serial' && tempPartCode) {
+        // Eliminar el Part escaneado y resetear el estado
+        setStatus(`Part eliminado: ${tempPartCode}`, 'deleted');
+        tempPartCode = '';
+        currentScan = 'part';
+        currentScanDiv.textContent = '';
+    } else {
+        setStatus('No hay un Part escaneado para eliminar.', 'purple');
+    }
 
     // Reenfocar el campo de entrada
     setTimeout(() => {
@@ -310,27 +306,51 @@ function maintainBarcodeInputFocus(event) {
 document.addEventListener('mousedown', maintainBarcodeInputFocus);
 document.addEventListener('touchstart', maintainBarcodeInputFocus);
 
-// Reenfocar el campo de entrada al hacer clic en el botón de eliminación
+// Reenfocar el campo de entrada al hacer clic en los botones de eliminación
 document.getElementById('deleteLastRecord').addEventListener('click', () => {
     setTimeout(() => {
         barcodeInput.focus();
     }, 100);
 });
+document.getElementById('deletePart').addEventListener('click', () => {
+    setTimeout(() => {
+        barcodeInput.focus();
+    }, 100);
+});
 
-// Función para actualizar la tabla de últimos 10 registros
+// Función para actualizar la tabla de últimos 10 registros con numeración correcta
 function updateRecordsTable() {
     const tableBody = document.getElementById('recordsTableBody');
     tableBody.innerHTML = ''; // Limpiar la tabla
 
-    // Obtener los últimos 10 registros
-    const lastTenRecords = storedRecords.slice(-10).reverse(); // Más recientes primero
+    if (storedRecords.length === 0) {
+        // Si no hay registros, no hacer nada o mostrar un mensaje opcional
+        return;
+    }
 
+    // Ordenar los registros por fecha y hora descendente (más recientes primero)
+    const sortedRecords = [...storedRecords].sort((a, b) => {
+        const dateTimeA = parseDateTime(a.date, a.time);
+        const dateTimeB = parseDateTime(b.date, b.time);
+        return dateTimeB - dateTimeA; // Descendente
+    });
+
+    // Obtener los últimos 10 registros
+    const lastTenRecords = sortedRecords.slice(0, 10);
+
+    // Numeración secuencial: empezar en totalRecords y disminuir
     lastTenRecords.forEach((record, index) => {
+        // Validar que el registro tenga todos los campos necesarios
+        if (!record.part || !record.serial || !record.date || !record.time) {
+            console.warn('Registro incompleto encontrado, se omitirá en la tabla.', record);
+            return; // Saltar este registro
+        }
+
         const row = document.createElement('tr');
 
         // Columna No.
         const noCell = document.createElement('td');
-        noCell.textContent = totalRecords - (lastTenRecords.length - 1) + index;
+        noCell.textContent = totalRecords - index; // Numeración descendente
         row.appendChild(noCell);
 
         // Columna Fecha
@@ -343,10 +363,15 @@ function updateRecordsTable() {
         timeCell.textContent = record.time;
         row.appendChild(timeCell);
 
-        // Columna Código
-        const codeCell = document.createElement('td');
-        codeCell.textContent = record.barcode;
-        row.appendChild(codeCell);
+        // Columna Part
+        const partCell = document.createElement('td');
+        partCell.textContent = record.part;
+        row.appendChild(partCell);
+
+        // Columna Serial
+        const serialCell = document.createElement('td');
+        serialCell.textContent = record.serial;
+        row.appendChild(serialCell);
 
         tableBody.appendChild(row);
     });
@@ -356,3 +381,144 @@ function updateRecordsTable() {
 document.addEventListener('DOMContentLoaded', () => {
     updateRecordsTable();
 });
+
+// Función para enviar los datos CSV al servidor central
+async function uploadCSV() {
+    if (storedRecords.length === 0) {
+        setStatus('No hay datos para enviar.', 'purple');
+        return;
+    }
+
+    const loader = document.getElementById('loader');
+    loader.style.display = 'block';
+    barcodeInput.disabled = true;
+
+    const minProcessingTime = 3000; // 3 segundos
+    const startTime = Date.now();
+
+    // Preparar contenido CSV
+    let csvContent = 'Fecha,Hora,Part,Serial\n'; // Cabeceras
+    storedRecords.forEach((record) => {
+        const row = `${escapeCSV(record.date)},${escapeCSV(record.time)},${escapeCSV(record.part)},${escapeCSV(record.serial)}`;
+        csvContent += row + '\n';
+    });
+
+    // Crear un Blob a partir del contenido CSV
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const now = new Date();
+    const dateString = now.toLocaleDateString('es-ES').replace(/\//g, "-");
+    const timeString = now.toLocaleTimeString('es-ES', { hour12: false }).replace(/:/g, ".");
+    const fileName = `${projectName}-${dateString}-${timeString}.csv`;
+
+    // Crear FormData para enviar el archivo
+    const formData = new FormData();
+    formData.append('file', blob, fileName);
+    formData.append('deviceId', deviceId);
+
+    // Dirección del servidor central
+    const serverURL = 'http://192.168.1.100:3000/upload'; // Cambia esto por la IP de tu servidor
+
+    try {
+        const response = await fetch(serverURL, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            setStatus('Datos enviados al servidor.', 'success');
+            // Limpiar registros y contador
+            storedRecords = [];
+            localStorage.removeItem('storedRecords');
+
+            totalRecords = 0;
+            updateCounter();
+            localStorage.removeItem('totalRecords');
+
+            // Actualizar la tabla de registros
+            updateRecordsTable();
+
+            // Opcional: Verificar si el servidor ha marcado los archivos como descargados
+            checkDownloadStatus();
+        } else {
+            setStatus(`Error: ${result.message}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error al enviar los datos:', error);
+        setStatus('Error al conectar con el servidor.', 'error');
+    } finally {
+        // Asegurar que han pasado al menos 3 segundos
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(0, minProcessingTime - elapsedTime);
+        setTimeout(() => {
+            loader.style.display = 'none';
+            barcodeInput.disabled = false;
+            barcodeInput.focus();
+        }, remainingTime);
+    }
+}
+
+// Función para verificar si el archivo fue descargado y limpiar datos si es así
+async function checkDownloadStatus() {
+    try {
+        const serverURL = 'http://192.168.1.100:3000/files'; // Cambia esto por la IP de tu servidor
+        const response = await fetch(serverURL);
+        const files = await response.json();
+
+        // Buscar archivos enviados por este dispositivo que ya fueron descargados
+        const downloadedFiles = files.filter(file => file.deviceId === deviceId && file.downloaded);
+
+        if (downloadedFiles.length > 0) {
+            // Limpiar los registros ya enviados y descargados
+            setStatus('Datos descargados desde el servidor. Limpiando registros locales.', 'success');
+            storedRecords = [];
+            localStorage.removeItem('storedRecords');
+
+            totalRecords = 0;
+            updateCounter();
+            localStorage.removeItem('totalRecords');
+        } else {
+            // Si no, mantener los datos para futuras subidas
+            setStatus('Datos aún no han sido descargados. Manteniendo registros locales.', 'info');
+        }
+    } catch (error) {
+        console.error('Error al verificar el estado de descarga:', error);
+        setStatus('Error al verificar el estado de descarga.', 'error');
+    }
+}
+
+// Función para escapar valores CSV
+function escapeCSV(value) {
+    if (typeof value === 'string') {
+        value = value.replace(/"/g, '""'); // Escapar comillas dobles
+        return `"${value}"`; // Envolver en comillas dobles
+    }
+    return value;
+}
+
+// Función para parsear fecha y hora con validaciones
+function parseDateTime(dateStr, timeStr) {
+    if (typeof dateStr !== 'string' || typeof timeStr !== 'string') {
+        console.error('parseDateTime: dateStr o timeStr no son cadenas válidas.', { dateStr, timeStr });
+        return new Date(0); // Retorna una fecha mínima si hay error
+    }
+
+    const dateParts = dateStr.split('/');
+    const timeParts = timeStr.split(':');
+
+    if (dateParts.length !== 3 || timeParts.length < 2) {
+        console.error('parseDateTime: Formato de fecha u hora incorrecto.', { dateStr, timeStr });
+        return new Date(0);
+    }
+
+    const [day, month, year] = dateParts.map(Number);
+    const [hours, minutes, seconds = 0] = timeParts.map(Number); // seconds por defecto a 0 si no existen
+
+    if ([day, month, year, hours, minutes, seconds].some(isNaN)) {
+        console.error('parseDateTime: Uno o más componentes de la fecha/hora no son números válidos.', { day, month, year, hours, minutes, seconds });
+        return new Date(0);
+    }
+
+    return new Date(year, month - 1, day, hours, minutes, seconds);
+}
