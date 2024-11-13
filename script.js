@@ -336,7 +336,7 @@ function updateRecordsTable() {
     });
 
     // Obtener los últimos 10 registros
-    const lastTenRecords = sortedRecords.slice(0, 10);
+    const lastTenRecords = sortedRecords.slice(0, 8);
 
     // Numeración secuencial: empezar en totalRecords y disminuir
     lastTenRecords.forEach((record, index) => {
