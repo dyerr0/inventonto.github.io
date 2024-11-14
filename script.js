@@ -129,6 +129,13 @@ function setStatus(message, type = 'info') {
     }, 5000); // 5000 milisegundos = 5 segundos
 }
 
+// Función para verificar si un serial ya ha sido escaneado
+function isSerialDuplicated(serialCode) {
+    // Convertir a mayúsculas para una comparación insensible a mayúsculas/minúsculas
+    const serialUpper = serialCode.toUpperCase();
+    return storedRecords.some(record => record.serial.toUpperCase() === serialUpper);
+}
+
 // Función principal para procesar la entrada del código de barras
 function processBarcodeInput() {
     const barcode = barcodeInput.value.trim();
@@ -153,16 +160,25 @@ function processBarcodeInput() {
         // Esperando un código que empiece con 'S'
         if (/^S/i.test(barcode)) {
             const serialCode = barcode;
-            const partCode = tempPartCode;
-            currentScan = 'part'; // Resetear para el próximo registro
-            tempPartCode = '';
-            currentScanDiv.textContent = '';
 
-            // Mostrar ambos códigos en el estado
-            setStatus(`No. Part: ${partCode} - Serial: ${serialCode}`, 'info');
+            // Verificar si el serial ya ha sido escaneado
+            if (isSerialDuplicated(serialCode)) {
+                setStatus(`- ${serialCode} - Serial Repetido`, 'error'); // Mostrar mensaje de serial duplicado
+                // Mantener el flujo de escaneo en 'serial' para reintentar
+                currentScan = 'serial';
+                // No limpiar tempPartCode ni currentScanDiv
+            } else {
+                const partCode = tempPartCode;
+                currentScan = 'part'; // Resetear para el próximo registro
+                tempPartCode = '';
+                currentScanDiv.textContent = '';
 
-            // Registrar el par de códigos
-            saveRecord(partCode, serialCode);
+                // Mostrar ambos códigos en el estado
+                setStatus(`No. Part: ${partCode} - Serial: ${serialCode}`, 'info');
+
+                // Registrar el par de códigos
+                saveRecord(partCode, serialCode);
+            }
         } else {
             // No es un código válido para Serial
             setStatus(`- ${barcode} - No coincide`, 'error');
@@ -328,8 +344,8 @@ function updateRecordsTable() {
         return dateTimeB - dateTimeA; // Descendente
     });
 
-    // Obtener los últimos 10 registros
-    const lastTenRecords = sortedRecords.slice(0, 5);
+    // Obtener los últimos 10 registros (Corregido de slice(0,5) a slice(0,10))
+    const lastTenRecords = sortedRecords.slice(0, 10); // Modificación aquí
 
     // Numeración secuencial: empezar en totalRecords y disminuir
     lastTenRecords.forEach((record, index) => {
@@ -417,8 +433,9 @@ function downloadDataAsCSV() {
         });
 
         const now = new Date();
-        const dateString = now.toLocaleDateString('es-ES').replace(/\//g, "'");
-        const timeString = now.toLocaleTimeString('es-ES', { hour12: false }).replace(/:/g, ".");
+        // Se recomienda estandarizar el formato de fecha a YYYY-MM-DD
+        const dateString = now.toISOString().split('T')[0]; // "2024-04-27"
+        const timeString = now.toTimeString().split(' ')[0].replace(/:/g, ".");
         const fileName = `${projectName}-${dateString}-${timeString}.csv`;
 
         const encodedUri = encodeURI(csvContent);
