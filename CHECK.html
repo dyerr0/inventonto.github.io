@@ -17,20 +17,20 @@
         </header>
         
         <div class="login-box">
-            <!-- Botones para gestionar registros -->
+            <!-- Botones para eliminar registros -->
             <div class="action-buttons">
                 <button id="deleteLastRecord" class="delete-button">Borrar Registro</button>
-                <button id="uploadCSV" class="upload-button">Server</button>
-                <button id="deletePart" class="delete-button">Cancelar PART</button>
+                <button id="downloadCSV" class="download-button">Descargar</button>
+                <button id="deletePart" class="delete-button">Borrar PART</button>
             </div>
             <!-- Indicador LED de estado de Internet -->
             <div id="internetStatus" class="led"></div>
-            <div id="time">bleh</div>
+            <div id="time">11:52:37</div>
             
             <!-- Área para mostrar Part y Serial mientras se escanean -->
             <div id="currentScan" class="current-scan"></div>
             
-            <input type="text" id="barcodeInput" autofocus placeholder="Escanea el código">
+            <input type="text" id="barcodeInput" autofocus placeholder="Escanea el codigo">
             <div id="status"></div> <!-- Mensaje de estado ahora vacío -->
             <!-- Animación de carga -->
             <div id="loader" class="loader" style="display: none;"></div>

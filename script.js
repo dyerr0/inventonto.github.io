@@ -13,13 +13,6 @@ let statusTimeout;
 let currentScan = 'part'; // 'part' o 'serial'
 let tempPartCode = '';
 
-// Obtener o generar un Device ID único
-let deviceId = localStorage.getItem('deviceId');
-if (!deviceId) {
-    deviceId = 'device-' + Math.random().toString(36).substr(2, 9);
-    localStorage.setItem('deviceId', deviceId);
-}
-
 // Función para actualizar la hora actual
 function updateTime() {
     const now = new Date();
@@ -382,52 +375,70 @@ document.addEventListener('DOMContentLoaded', () => {
     updateRecordsTable();
 });
 
-// Función para enviar los datos CSV al servidor central
-async function uploadCSV() {
+// Función para descargar los registros como CSV cuando se presiona el botón
+document.getElementById('downloadCSV').addEventListener('click', () => {
+    downloadDataAsCSV();
+});
+
+// Función para descargar los registros como CSV
+function downloadDataAsCSV() {
     if (storedRecords.length === 0) {
-        setStatus('No hay datos para enviar.', 'purple');
+        setStatus('No hay datos para descargar.', 'purple');
         return;
     }
 
     const loader = document.getElementById('loader');
+
     loader.style.display = 'block';
+
     barcodeInput.disabled = true;
 
-    const minProcessingTime = 3000; // 3 segundos
+    const minProcessingTime = 3000; // 3000 milisegundos = 3 segundos
     const startTime = Date.now();
 
-    // Preparar contenido CSV
-    let csvContent = 'Fecha,Hora,Part,Serial\n'; // Cabeceras
-    storedRecords.forEach((record) => {
-        const row = `${escapeCSV(record.date)},${escapeCSV(record.time)},${escapeCSV(record.part)},${escapeCSV(record.serial)}`;
-        csvContent += row + '\n';
-    });
-
-    // Crear un Blob a partir del contenido CSV
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const now = new Date();
-    const dateString = now.toLocaleDateString('es-ES').replace(/\//g, "-");
-    const timeString = now.toLocaleTimeString('es-ES', { hour12: false }).replace(/:/g, ".");
-    const fileName = `${projectName}-${dateString}-${timeString}.csv`;
-
-    // Crear FormData para enviar el archivo
-    const formData = new FormData();
-    formData.append('file', blob, fileName);
-    formData.append('deviceId', deviceId);
-
-    // Dirección del servidor central
-    const serverURL = 'http://172.30.182.161:3000/upload'; // Cambia esto por la IP de tu servidor
-
-    try {
-        const response = await fetch(serverURL, {
-            method: 'POST',
-            body: formData
+    setTimeout(() => {
+        // Ordenar los registros por fecha y hora descendente (más recientes primero)
+        const sortedRecords = [...storedRecords].sort((a, b) => {
+            const dateTimeA = parseDateTime(a.date, a.time);
+            const dateTimeB = parseDateTime(b.date, b.time);
+            return dateTimeB - dateTimeA; // Descendente
         });
 
-        const result = await response.json();
+        // Obtener todos los registros para descargar
+        const allRecords = sortedRecords;
 
-        if (result.status === 'success') {
-            setStatus('Datos enviados al servidor.', 'success');
+        // Preparar contenido CSV
+        let csvContent = 'data:text/csv;charset=utf-8,';
+        csvContent += 'Fecha,Hora,Part,Serial\n'; // Cabeceras
+
+        allRecords.forEach((record) => {
+            const row = `${escapeCSV(record.date)},${escapeCSV(record.time)},${escapeCSV(record.part)},${escapeCSV(record.serial)}`;
+            csvContent += row + '\n';
+        });
+
+        const now = new Date();
+        const dateString = now.toLocaleDateString('es-ES').replace(/\//g, "'");
+        const timeString = now.toLocaleTimeString('es-ES', { hour12: false }).replace(/:/g, ".");
+        const fileName = `${projectName}-${dateString}-${timeString}.csv`;
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', fileName);
+        document.body.appendChild(link);
+
+        // Asegurar que han pasado al menos 3 segundos
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(0, minProcessingTime - elapsedTime);
+
+        setTimeout(() => {
+            link.click();
+            document.body.removeChild(link);
+
+            loader.style.display = 'none';
+
+            barcodeInput.disabled = false;
+
             // Limpiar registros y contador
             storedRecords = [];
             localStorage.removeItem('storedRecords');
@@ -439,53 +450,14 @@ async function uploadCSV() {
             // Actualizar la tabla de registros
             updateRecordsTable();
 
-            // Opcional: Verificar si el servidor ha marcado los archivos como descargados
-            checkDownloadStatus();
-        } else {
-            setStatus(`Error: ${result.message}`, 'error');
-        }
-    } catch (error) {
-        console.error('Error al enviar los datos:', error);
-        setStatus('Error al conectar con el servidor.', 'error');
-    } finally {
-        // Asegurar que han pasado al menos 3 segundos
-        const elapsedTime = Date.now() - startTime;
-        const remainingTime = Math.max(0, minProcessingTime - elapsedTime);
-        setTimeout(() => {
-            loader.style.display = 'none';
-            barcodeInput.disabled = false;
+            // Redirigir el foco al campo de entrada
             barcodeInput.focus();
+
+            // Mostrar mensaje de estado
+            setStatus('Datos descargados y registros reiniciados', 'info');
         }, remainingTime);
-    }
-}
 
-// Función para verificar si el archivo fue descargado y limpiar datos si es así
-async function checkDownloadStatus() {
-    try {
-        const serverURL = 'http://172.30.182.161:3000/files'; // Cambia esto por la IP de tu servidor
-        const response = await fetch(serverURL);
-        const files = await response.json();
-
-        // Buscar archivos enviados por este dispositivo que ya fueron descargados
-        const downloadedFiles = files.filter(file => file.deviceId === deviceId && file.downloaded);
-
-        if (downloadedFiles.length > 0) {
-            // Limpiar los registros ya enviados y descargados
-            setStatus('Datos descargados desde el servidor. Limpiando registros locales.', 'success');
-            storedRecords = [];
-            localStorage.removeItem('storedRecords');
-
-            totalRecords = 0;
-            updateCounter();
-            localStorage.removeItem('totalRecords');
-        } else {
-            // Si no, mantener los datos para futuras subidas
-            setStatus('Datos aún no han sido descargados. Manteniendo registros locales.', 'info');
-        }
-    } catch (error) {
-        console.error('Error al verificar el estado de descarga:', error);
-        setStatus('Error al verificar el estado de descarga.', 'error');
-    }
+    }, 0);
 }
 
 // Función para escapar valores CSV

@@ -53,11 +53,11 @@ header h1 {
 .header-right {
     position: absolute;
     top: 50%;
-    right: 4.5vw;
+    right: 3.5vw;
     transform: translateY(-50%);
     color: #FFFFFF;
     display: flex;
-    font-size: 3vw;
+    font-size: 3.5vw;
     align-items: center;
     user-select: none; /* Evitar selección de texto */
 }
@@ -83,8 +83,8 @@ header h1 {
     width: 3.5vw;
     height: 3.5vw;
     border-radius: 50%;
-    background-color: green; /* Verde inicial */
-    box-shadow: 0 0 5vw green; /* Glow verde */
+    background-color: green; /* Cambiado inline style a CSS */
+    box-shadow: 0 0 5vw green; /* Cambiado inline style a CSS */
     animation: blink 1s infinite;
     position: absolute;
     top: 2vw;
@@ -109,8 +109,8 @@ header h1 {
 
 /* Área para mostrar Part y Serial mientras se escanean */
 .current-scan {
-    font-size: 4vw;
-    FONT-WEIGHT: BOLDER;
+    font-size: 4.2vw;
+    font-weight: bolder;
     margin-bottom: 1vw;
     color: #ffffff;
     user-select: none;
@@ -145,7 +145,7 @@ header h1 {
 }
 
 #status {
-    font-size: 3.8vw;
+    font-size: 3.5vw;
     margin-top: 2vw;
     margin-bottom: 2vw;
     font-weight: bold;
@@ -310,7 +310,7 @@ header h1 {
 
 .counter {
     position: absolute;
-    bottom: 4vw;
+    bottom: 5vw;
     right: 2.5vw;
     font-size: 3.5vw;
     user-select: none; /* Evitar selección de texto */
@@ -335,9 +335,9 @@ header h1 {
 
 .logo {
     position: absolute;
-    bottom: 5vw;
-    left: 12vw;
-    transform: scale(1.8); /* Corregido de 'scale: 2;' a 'transform: scale(2);' */
+    bottom: 6vw;
+    left: 14vw;
+    transform: scale(2); /* Corregido de 'scale: 2;' a 'transform: scale(2);' */
     user-select: none; /* Evitar selección de texto */
 }
 
@@ -356,7 +356,6 @@ header h1 {
     margin-bottom: 5vw;
 }
 
-/* Botón Borrar */
 .delete-button {
     background-color: #c0392b;
     color: #FFFFFF;
@@ -377,9 +376,9 @@ header h1 {
     transform: scale(0.98);
 }
 
-/* Botón Enviar CSV al Servidor */
-.upload-button {
-    background-color: #2980b9; /* Azul fuerte */
+/* Estilos para el botón Descargar CSV */
+.download-button {
+    background-color: #800080; /* Morado fuerte */
     color: #FFFFFF;
     border: none;
     font-family: Helvetica;
@@ -390,11 +389,11 @@ header h1 {
     transition: background-color 0.3s, transform 0.2s;
 }
 
-.upload-button:hover {
-    background-color: #3498db; /* Azul más claro al pasar el cursor */
+.download-button:hover {
+    background-color: #9932CC; /* Un morado más claro al pasar el cursor */
 }
 
-.upload-button:active {
+.download-button:active {
     transform: scale(0.98);
 }
 
@@ -422,7 +421,7 @@ header h1 {
 .records-table th {
     background-color: #0D47A1;
     color: #FFFFFF;
-    font-size: 2.5vw;
+    font-size: 2.8vw;
 }
 
 .records-table td {
