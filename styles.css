@@ -335,7 +335,7 @@ header h1 {
 
 .logo {
     position: absolute;
-    bottom: 15vw;
+    bottom: 17vw;
     left: 12vw;
     transform: scale(1.8); /* Corregido de 'scale: 2;' a 'transform: scale(2);' */
     user-select: none; /* Evitar selección de texto */
