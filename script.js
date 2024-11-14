@@ -4,7 +4,7 @@
 let totalRecords = 0;
 let storedRecords = [];
 
-let projectName = 'CLK';
+let projectName = 'INV';
 
 // Variable para manejar el timeout de los mensajes de estado
 let statusTimeout;
