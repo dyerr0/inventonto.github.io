@@ -310,7 +310,7 @@ header h1 {
 
 .counter {
     position: absolute;
-    bottom: 5vw;
+    bottom: 15vw;
     right: 2.5vw;
     font-size: 3.5vw;
     user-select: none; /* Evitar selección de texto */
@@ -335,9 +335,9 @@ header h1 {
 
 .logo {
     position: absolute;
-    bottom: 6vw;
-    left: 14vw;
-    transform: scale(2); /* Corregido de 'scale: 2;' a 'transform: scale(2);' */
+    bottom: 15vw;
+    left: 12vw;
+    transform: scale(1.8); /* Corregido de 'scale: 2;' a 'transform: scale(2);' */
     user-select: none; /* Evitar selección de texto */
 }
 
